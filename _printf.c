@@ -1,66 +1,52 @@
+#include <stdio.h>
+#include <stdarg.h>
 #include "main.h"
-
-void print_buffer(char buffer[], int *buff_ind);
-
 /**
- * _printf - Printf function
- * @format: format.
- * Return: Printed chars.
+ * _printf - Prints output according to a format.
+ * @format: The format string.
+ * Return: The number of characters printed.
  */
 int _printf(const char *format, ...)
 {
-	int k, printed = 0, printed_chars = 0;
-	int flags, width, precision, size, buff_ind = 0;
-	va_list list;
-	char buffer[BUFF_SIZE];
+	va_list args;
+	int count = 0;
 
-	if (format == NULL)
-		return (-1);
-
-	va_start(list, format);
-
-	for (k = 0; format && format[k] != '\0'; k++)
+	va_start(args, format);
+	while (format && *format != '\0')
 	{
-		if (format[k] != '%')
+		if (*format == '%')
 		{
-			buffer[buff_ind++] = format[k];
-			if (buff_ind == BUFF_SIZE)
-				print_buffer(buffer, &buff_ind);
-			/* write(1, &format[i], 1);*/
-			printed_chars++;
+			format++;
+			if (*format == 'c')
+			{
+				int ch = va_arg(args, int);
+
+				putchar(ch);
+				count++;
+			}
+			else if (*format == 's')
+			{
+				char *str = va_arg(args, char *);
+				int len = 0;
+
+				while (str[len] != '\0')
+					len++;
+				fputs(str, stdout);
+				count += len;
+			}
+			else if (*format == '%')
+			{
+				putchar('%');
+				count++;
+			}
 		}
 		else
 		{
-			print_buffer(buffer, &buff_ind);
-			flags = get_flags(format, &k);
-			width = get_width(format, &k, list);
-			precision = get_precision(format, &k, list);
-			size = get_size(format, &k);
-			++k;
-			printed = handle_print(format, &k, list, buffer,
-				flags, width, precision, size);
-			if (printed == -1)
-				return (-1);
-			printed_chars += printed;
+			putchar(*format);
+			count++;
 		}
+		format++;
 	}
-
-	print_buffer(buffer, &buff_ind);
-
-	va_end(list);
-
-	return (printed_chars);
-}
-
-/**
- * print_buffer - Prints the contents of the buffer if it exist
- * @buffer: Array of chars
- * @buff_ind: Index at which to add next char, represents the length.
- */
-void print_buffer(char buffer[], int *buff_ind)
-{
-	if (*buff_ind > 0)
-		write(1, &buffer[0], *buff_ind);
-
-	*buff_ind = 0;
+	va_end(args);
+	return (count);
 }
